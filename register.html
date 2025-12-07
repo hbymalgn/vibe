@@ -250,11 +250,11 @@
         const successMessage = document.getElementById('successMessage');
         
         if (registerForm) {
-            registerForm.addEventListener('submit', function(e) {
+            registerForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const name = document.getElementById('name').value;
-                const email = document.getElementById('email').value;
+                const id = document.getElementById('email').value; // input id는 email이지만 실제로는 id 값
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
                 
@@ -275,33 +275,36 @@
                     return;
                 }
                 
-                // 사용자 목록 가져오기
-                const users = JSON.parse(localStorage.getItem('vibe_users') || '[]');
-                
-                // 아이디 중복 확인
-                if (users.find(u => u.email === email)) {
-                    errorMessage.textContent = '이미 사용 중인 아이디입니다.';
+                try {
+                    // API를 통해 회원가입
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id, name, password }),
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // 성공 메시지 표시
+                        successMessage.textContent = '회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...';
+                        successMessage.classList.add('show');
+                        
+                        // 1.5초 후 로그인 페이지로 이동
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1500);
+                    } else {
+                        errorMessage.textContent = data.message || '회원가입에 실패했습니다.';
+                        errorMessage.classList.add('show');
+                    }
+                } catch (error) {
+                    console.error('Register error:', error);
+                    errorMessage.textContent = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
                     errorMessage.classList.add('show');
-                    return;
                 }
-                
-                // 새 사용자 추가
-                users.push({
-                    name: name,
-                    email: email,
-                    password: password
-                });
-                
-                localStorage.setItem('vibe_users', JSON.stringify(users));
-                
-                // 성공 메시지 표시
-                successMessage.textContent = '회원가입이 완료되었습니다! 로그인 페이지로 이동합니다...';
-                successMessage.classList.add('show');
-                
-                // 1.5초 후 로그인 페이지로 이동
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1500);
             });
         }
         

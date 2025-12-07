@@ -6,8 +6,7 @@
 
 -- Users 테이블
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
+    id TEXT PRIMARY KEY NOT NULL, -- 일반 ID (텍스트)
     name TEXT NOT NULL,
     password TEXT NOT NULL,
     role TEXT DEFAULT 'user',
@@ -17,8 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Projects 테이블
 CREATE TABLE IF NOT EXISTS projects (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    id TEXT PRIMARY KEY NOT NULL, -- UUID 또는 커스텀 ID
+    user_id TEXT NOT NULL,
     name TEXT NOT NULL,
     data TEXT NOT NULL, -- JSON 데이터
     thumbnail TEXT, -- 썸네일 이미지 URL 또는 base64
@@ -30,4 +29,4 @@ CREATE TABLE IF NOT EXISTS projects (
 -- 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_created_at ON projects(created_at);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_id ON users(id);

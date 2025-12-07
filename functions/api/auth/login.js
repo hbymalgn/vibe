@@ -3,9 +3,9 @@ export async function onRequestPost(context) {
     const { request, env } = context;
     
     try {
-        const { email, password } = await request.json();
+        const { id, password } = await request.json();
         
-        if (!email || !password) {
+        if (!id || !password) {
             return new Response(
                 JSON.stringify({ success: false, message: '아이디와 비밀번호를 입력해주세요.' }),
                 { 
@@ -17,8 +17,8 @@ export async function onRequestPost(context) {
         
         // D1 데이터베이스에서 사용자 조회
         const user = await env.DB.prepare(
-            'SELECT * FROM users WHERE email = ?'
-        ).bind(email).first();
+            'SELECT * FROM users WHERE id = ?'
+        ).bind(id).first();
         
         if (!user) {
             return new Response(
@@ -48,7 +48,6 @@ export async function onRequestPost(context) {
                 success: true,
                 user: {
                     id: user.id,
-                    email: user.email,
                     name: user.name,
                     role: user.role
                 }

@@ -1767,14 +1767,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let projectId = urlParams.get('id') || `vibe_project_${Date.now()}`;
 
     if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            // 프로젝트 데이터 저장 (로컬 스토리지 또는 서버)
+        saveBtn.addEventListener('click', async () => {
+            // 현재 로그인한 사용자 확인
+            const currentUser = JSON.parse(localStorage.getItem('vibe_user') || 'null');
+            if (!currentUser || !currentUser.id) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // 프로젝트 데이터 준비
             const projectData = {
-                id: projectId,
-                name: projectNameInput ? projectNameInput.value : '제목 없는 디자인',
-                createdAt: localStorage.getItem(`vibe_project_${projectId}`) ? 
-                    JSON.parse(localStorage.getItem(`vibe_project_${projectId}`)).createdAt : Date.now(),
-                updatedAt: Date.now(),
                 canvas: {
                     width: canvas.width,
                     height: canvas.height,
@@ -1822,27 +1825,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             };
             
-            // 로컬 스토리지에 저장
-            localStorage.setItem(projectId, JSON.stringify(projectData));
+            const projectName = projectNameInput ? projectNameInput.value : '제목 없는 디자인';
             
-            // Update URL with project ID
-            if (!urlParams.get('id')) {
-                window.history.replaceState({}, '', `editor.html?id=${projectId}`);
-            }
-            
-            saveBtn.textContent = '✓ 저장됨';
-            setTimeout(() => {
+            try {
+                // 프로젝트가 이미 존재하는지 확인 (URL에 id가 있으면 업데이트)
+                if (urlParams.get('id')) {
+                    // 업데이트
+                    const response = await fetch(`/api/projects/${projectId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: projectName,
+                            data: projectData,
+                            thumbnail: null // 썸네일은 나중에 추가 가능
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        saveBtn.textContent = '✓ 저장됨';
+                        setTimeout(() => {
+                            saveBtn.textContent = '💾 저장';
+                        }, 2000);
+                    } else {
+                        throw new Error(result.message || '저장 실패');
+                    }
+                } else {
+                    // 새로 생성
+                    const response = await fetch('/api/projects', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: currentUser.id,
+                            name: projectName,
+                            data: projectData,
+                            thumbnail: null
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        // URL에 프로젝트 ID 추가
+                        projectId = result.project.id;
+                        window.history.replaceState({}, '', `editor.html?id=${projectId}`);
+                        
+                        saveBtn.textContent = '✓ 저장됨';
+                        setTimeout(() => {
+                            saveBtn.textContent = '💾 저장';
+                        }, 2000);
+                    } else {
+                        throw new Error(result.message || '저장 실패');
+                    }
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('저장 중 오류가 발생했습니다: ' + error.message);
                 saveBtn.textContent = '💾 저장';
-            }, 2000);
+            }
         });
     }
     
     // Load project if ID is in URL
     if (urlParams.get('id')) {
-        const savedProject = localStorage.getItem(projectId);
-        if (savedProject) {
+        // D1 데이터베이스에서 프로젝트 로드
+        (async () => {
             try {
-                const projectData = JSON.parse(savedProject);
+                const response = await fetch(`/api/projects/${projectId}`);
+                const result = await response.json();
+                
+                if (!result.success || !result.project) {
+                    console.error('프로젝트를 찾을 수 없습니다.');
+                    return;
+                }
+                
+                const projectData = result.project;
+                const projectObjects = typeof projectData.data === 'string' ? JSON.parse(projectData.data) : projectData.data;
                 
                 // Load project name
                 if (projectNameInput && projectData.name) {
@@ -1850,33 +1911,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // Load canvas settings
-                if (projectData.canvas) {
-                    canvas.width = projectData.canvas.width;
-                    canvas.height = projectData.canvas.height;
+                if (projectObjects.canvas) {
+                    canvas.width = projectObjects.canvas.width;
+                    canvas.height = projectObjects.canvas.height;
                     
                     // Update canvas wrapper size
                     if (canvasWrapper) {
-                        canvasWrapper.style.width = `${projectData.canvas.width}px`;
-                        canvasWrapper.style.height = `${projectData.canvas.height}px`;
+                        canvasWrapper.style.width = `${projectObjects.canvas.width}px`;
+                        canvasWrapper.style.height = `${projectObjects.canvas.height}px`;
                     }
                     
                     // Set background
-                    if (projectData.canvas.background === 'transparent') {
+                    if (projectObjects.canvas.background === 'transparent') {
                         if (transparentBgCheckbox) transparentBgCheckbox.checked = true;
                         if (canvasWrapper) canvasWrapper.style.background = 'transparent';
                     } else {
                         if (transparentBgCheckbox) transparentBgCheckbox.checked = false;
-                        if (canvasBgColor) canvasBgColor.value = projectData.canvas.background;
-                        if (canvasBgColorText) canvasBgColorText.value = projectData.canvas.background.toUpperCase();
-                        if (canvasWrapper) canvasWrapper.style.background = projectData.canvas.background;
-                        ctx.fillStyle = projectData.canvas.background;
+                        if (canvasBgColor) canvasBgColor.value = projectObjects.canvas.background;
+                        if (canvasBgColorText) canvasBgColorText.value = projectObjects.canvas.background.toUpperCase();
+                        if (canvasWrapper) canvasWrapper.style.background = projectObjects.canvas.background;
+                        ctx.fillStyle = projectObjects.canvas.background;
                         ctx.fillRect(0, 0, canvas.width, canvas.height);
                     }
                 }
                 
                 // Load objects
-                if (projectData.objects && objectsLayer) {
-                    projectData.objects.forEach(obj => {
+                if (projectObjects.objects && objectsLayer) {
+                    projectObjects.objects.forEach(obj => {
                         if (obj.type === 'text') {
                             const textDiv = document.createElement('div');
                             textDiv.className = 'canvas-object text-object';
@@ -2000,7 +2061,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (e) {
                 console.error('Error loading project:', e);
             }
-        }
+        })();
     }
 
     // Undo/Redo button handlers

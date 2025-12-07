@@ -3,9 +3,9 @@ export async function onRequestPost(context) {
     const { request, env } = context;
     
     try {
-        const { name, email, password } = await request.json();
+        const { id, name, password } = await request.json();
         
-        if (!name || !email || !password) {
+        if (!id || !name || !password) {
             return new Response(
                 JSON.stringify({ success: false, message: '모든 필드를 입력해주세요.' }),
                 { 
@@ -27,8 +27,8 @@ export async function onRequestPost(context) {
         
         // 중복 확인
         const existingUser = await env.DB.prepare(
-            'SELECT * FROM users WHERE email = ?'
-        ).bind(email).first();
+            'SELECT * FROM users WHERE id = ?'
+        ).bind(id).first();
         
         if (existingUser) {
             return new Response(
@@ -43,8 +43,8 @@ export async function onRequestPost(context) {
         // 사용자 생성 (비밀번호는 나중에 해시 처리 필요)
         const now = Date.now();
         const result = await env.DB.prepare(
-            'INSERT INTO users (email, name, password, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-        ).bind(email, name, password, 'user', now, now).run();
+            'INSERT INTO users (id, name, password, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(id, name, password, 'user', now, now).run();
         
         if (!result.success) {
             throw new Error('Failed to create user');
@@ -55,8 +55,7 @@ export async function onRequestPost(context) {
                 success: true,
                 message: '회원가입이 완료되었습니다.',
                 user: {
-                    id: result.meta.last_row_id,
-                    email: email,
+                    id: id,
                     name: name
                 }
             }),

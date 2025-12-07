@@ -209,51 +209,65 @@
     
     <script src="js/auth.js"></script>
     <script>
-        const loginForm = document.getElementById('loginForm');
-        const errorMessage = document.getElementById('errorMessage');
-        
-        if (loginForm) {
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                
-                // 간단한 로컬 스토리지 기반 인증 (실제로는 서버 API 사용)
-                const users = JSON.parse(localStorage.getItem('vibe_users') || '[]');
-                const user = users.find(u => u.email === email && u.password === password);
-                
-                if (user) {
-                    // 로그인 성공
-                    localStorage.setItem('vibe_user', JSON.stringify({
-                        email: user.email,
-                        name: user.name
-                    }));
-                    sessionStorage.setItem('vibe_user', JSON.stringify({
-                        email: user.email,
-                        name: user.name
-                    }));
+        // 에러 메시지 표시를 위한 헬퍼 함수
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (loginForm) {
+                // js/auth.js의 이벤트 리스너가 작동하도록 하되, 에러 메시지 표시를 위해 오버라이드
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
                     
-                    // 대시보드로 이동
-                    window.location.href = 'dashboard.html';
-                } else {
-                    // 로그인 실패
-                    errorMessage.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
-                    errorMessage.classList.add('show');
+                    const id = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
                     
-                    // 3초 후 에러 메시지 숨기기
-                    setTimeout(() => {
-                        errorMessage.classList.remove('show');
-                    }, 3000);
-                }
-            });
-        }
-        
-        // 이미 로그인되어 있으면 대시보드로 리다이렉트
-        const currentUser = localStorage.getItem('vibe_user');
-        if (currentUser) {
-            window.location.href = 'dashboard.html';
-        }
+                    fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ id, password }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            localStorage.setItem('vibe_user', JSON.stringify(data.user));
+                            sessionStorage.setItem('vibe_user', JSON.stringify(data.user));
+                            window.location.href = '/dashboard.html';
+                        } else {
+                            if (errorMessage) {
+                                errorMessage.textContent = data.message || '아이디 또는 비밀번호가 올바르지 않습니다.';
+                                errorMessage.classList.add('show');
+                                setTimeout(() => {
+                                    errorMessage.classList.remove('show');
+                                }, 3000);
+                            } else {
+                                alert(data.message);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (errorMessage) {
+                            errorMessage.textContent = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+                            errorMessage.classList.add('show');
+                            setTimeout(() => {
+                                errorMessage.classList.remove('show');
+                            }, 3000);
+                        } else {
+                            alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                        }
+                    });
+                });
+            }
+            
+            // 이미 로그인되어 있으면 대시보드로 리다이렉트
+            const currentUser = localStorage.getItem('vibe_user');
+            if (currentUser) {
+                window.location.href = '/dashboard.html';
+            }
+        });
     </script>
 </body>
 </html>
