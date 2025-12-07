@@ -1,89 +1,83 @@
-# Project Title: Web-Based Design Editor
+# VIBE EDiT - 웹 기반 디자인 에디터
 
-## Overview
-This project is a web-based design editor that allows users to create and modify designs using a drag-and-drop interface. Users can log in with their email accounts, manage their projects, and export their designs in various formats.
+Canva 스타일의 웹 기반 디자인 에디터입니다. 텍스트, 이미지, 도형을 사용하여 디자인을 만들고 내보낼 수 있습니다.
 
-## Features
-- **Email Authentication**: Users can log in and manage their accounts.
-- **Design Canvas**: A flexible canvas for creating designs with text, images, and shapes.
-- **Template Management**: Users can load and save their projects in JSON format.
-- **Export Options**: Designs can be exported as PNG, JPG, or PDF.
-- **User Dashboard**: A dedicated page for users to view their saved projects.
-- **Account Management**: Users can delete their accounts and log out.
+## 주요 기능
 
-## Project Structure
+- **사용자 인증**: 아이디/비밀번호 기반 로그인 및 회원가입
+- **디자인 캔버스**: 텍스트, 이미지, 도형을 추가하고 편집할 수 있는 캔버스
+- **프로젝트 관리**: 디자인을 저장하고 관리할 수 있는 대시보드
+- **내보내기**: PNG, JPEG, HTML 형식으로 내보내기
+- **계정 관리**: 프로필 수정 및 계정 삭제
+
+## 기술 스택
+
+- **Frontend**: HTML, CSS, JavaScript
+- **Backend**: Cloudflare Pages Functions
+- **Database**: Cloudflare D1 (SQLite)
+- **Deployment**: Cloudflare Pages
+
+## 프로젝트 구조
+
 ```
-vibe
-├── index.html
-├── css
-│   ├── main.css
-│   └── editor.css
-├── js
-│   ├── main.js
-│   ├── auth.js
-│   ├── editor.js
-│   └── canvas
-│       ├── canvasController.js
-│       └── objectRenderer.js
-├── pages
-│   ├── login.html
-│   ├── dashboard.html
-│   ├── editor.html
-│   └── account
-│       ├── delete.html
-│       └── logout.html
-├── templates
-│   └── sample-template.json
-├── api
-│   ├── server.js
-│   ├── routes
-│   │   ├── auth.js
-│   │   └── projects.js
-│   ├── controllers
-│   │   ├── authController.js
-│   │   └── projectController.js
-│   ├── models
-│   │   └── userModel.js
-│   └── middleware
-│       └── authMiddleware.js
-├── storage
-│   └── uploads
-├── package.json
-├── .env.example
-└── README.md
+vibe/
+├── index.html              # 메인 랜딩 페이지
+├── login.html              # 로그인 페이지
+├── register.html           # 회원가입 페이지
+├── dashboard.html          # 대시보드
+├── editor.html             # 에디터
+├── functions/              # Cloudflare Pages Functions
+│   └── api/
+│       ├── auth/           # 인증 API
+│       ├── admin/          # 관리자 API
+│       └── projects/       # 프로젝트 API
+├── css/                    # 스타일시트
+├── js/                     # JavaScript 파일
+├── schema.sql              # D1 데이터베이스 스키마
+└── wrangler.toml           # Cloudflare 설정
 ```
 
-## Setup Instructions
-1. **Clone the Repository**: 
-   ```
-   git clone <repository-url>
-   cd vibe
-   ```
+## 배포
 
-2. **Install Dependencies**: 
-   ```
-   npm install
+### Cloudflare Pages 배포
+
+1. **GitHub에 푸시**
+   ```bash
+   git push origin main
    ```
 
-3. **Environment Variables**: 
-   Copy `.env.example` to `.env` and fill in the required variables.
+2. **Cloudflare Dashboard에서 배포**
+   - Workers & Pages > Create application > Pages
+   - "Connect to Git" 선택
+   - GitHub 저장소 연결
+   - 프로젝트 이름: `vibeedit`
+   - Build command: (비워두기)
+   - Build output directory: `.`
 
-4. **Run the Server**: 
-   ```
-   npm start
-   ```
+3. **배포 후 접속**
+   - URL: `https://vibeedit.pages.dev`
 
-5. **Access the Application**: 
-   Open your browser and navigate to `http://localhost:3000`.
+### D1 데이터베이스 설정
 
-## Usage Guidelines
-- Users can create an account or log in using their email.
-- The dashboard displays all saved projects.
-- The editor allows users to create designs using various tools.
-- Users can export their designs in different formats.
+1. Cloudflare Dashboard > D1에서 데이터베이스 생성
+2. `schema.sql` 파일 실행하여 테이블 생성
+3. `wrangler.toml`에 database_id 설정
 
-## Contributing
-Contributions are welcome! Please submit a pull request or open an issue for any suggestions or improvements.
+자세한 배포 가이드는 `README-DEPLOY.md`를 참고하세요.
 
-## License
-This project is licensed under the MIT License.
+## 로컬 개발
+
+```bash
+# 의존성 설치
+npm install
+
+# 로컬 서버 실행 (Express.js)
+npm start
+
+# Cloudflare Pages 로컬 개발
+npx wrangler pages dev .
+```
+
+## 라이선스
+
+MIT License
