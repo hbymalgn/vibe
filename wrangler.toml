@@ -5,11 +5,11 @@ compatibility_date = "2024-01-01"
 # Pages specific settings
 pages_build_output_dir = "./"
 
-# KV Namespace binding (create in Cloudflare Dashboard)
-[[kv_namespaces]]
-binding = "VIBE_KV"
-id = "your-kv-namespace-id"  # Replace with actual KV namespace ID
-preview_id = "your-preview-kv-namespace-id"  # For local development
+# KV Namespace binding (commented out - not currently used)
+# [[kv_namespaces]]
+# binding = "VIBE_KV"
+# id = "your-kv-namespace-id"  # Replace with actual KV namespace ID
+# preview_id = "your-preview-kv-namespace-id"  # For local development
 
 # D1 Database binding
 [[d1_databases]]
