@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>에디터 - VIBE EDiT</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #0f0f0f;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        /* Header */
+        .editor-header {
+            height: 56px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+        }
+        
+        .editor-header .logo {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #8B5CF6;
+        }
+        
+        .header-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .project-name {
+            background: transparent;
+            border: 1px solid transparent;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 200px;
+            caret-color: white;
+            transition: all 0.2s;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .project-name::placeholder {
+            color: #aaa;
+        }
+        
+        .project-name:hover:not(:focus) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+        
+        .project-name:focus {
+            outline: none;
+            border: 1px solid #8B5CF6;
+            background: #252525;
+            color: #ffffff;
+            text-shadow: none;
+        }
+        
+        .project-name:not(:focus):not(:hover) {
+            background: transparent;
+            border-color: transparent;
+            color: #ffffff;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #3a3a3a;
+            color: #ccc;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            background: #252525;
+            color: white;
+        }
+        
+        .header-btn.primary {
+            background: #8B5CF6;
+            border-color: #8B5CF6;
+            color: white;
+        }
+        
+        .header-btn.primary:hover {
+            background: #7C3AED;
+        }
+        
+        /* Main Layout */
+        .editor-layout {
+            display: flex;
+            height: calc(100vh - 56px);
+        }
+        
+        /* Tools Sidebar */
+        .tools-sidebar {
+            width: 100px;
+            background: #1a1a1a;
+            border-right: 1px solid #2a2a2a;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .tool-btn {
+            width: 84px;
+            height: 64px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: 10px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #888;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .tool-btn:hover {
+            background: #252525;
+            color: #ccc;
+        }
+        
+        .tool-btn.active {
+            background: #8B5CF6;
+            color: white;
+        }
+        
+        .tool-btn .icon {
+            font-size: 1.5rem;
+        }
+        
+        /* Left Panel */
+        .left-panel {
+            width: 280px;
+            background: #1a1a1a;
+            border-right: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 16px;
+            border-bottom: 1px solid #2a2a2a;
+            font-weight: 600;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .panel-section {
+            margin-bottom: 24px;
+        }
+        
+        .panel-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        /* Element Grid */
+        .element-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        
+        .element-item {
+            aspect-ratio: 1;
+            background: #252525;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.5rem;
+        }
+        
+        .element-item:hover {
+            border-color: #8B5CF6;
+            background: rgba(139, 92, 246, 0.1);
+            transform: scale(1.05);
+        }
+        
+        /* Text Styles */
+        .text-style-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .text-style-item {
+            padding: 12px 16px;
+            background: #252525;
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .text-style-item:hover {
+            border-color: #8B5CF6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .text-style-item.heading {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .text-style-item.subheading {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ddd;
+        }
+        
+        .text-style-item.body {
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+        
+        /* Color Picker */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+        
+        .color-item {
+            aspect-ratio: 1;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .color-item:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-item.selected {
+            border-color: white;
+        }
+        
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            position: relative;
+        }
+        
+        .canvas-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 100%;
+            min-height: 100%;
+            padding: 40px;
+        }
+        
+        .canvas-wrapper {
+            background: white;
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            transform-origin: center center;
+            width: 794px;
+            height: 1123px;
+        }
+        
+        /* Grid Overlay */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 5;
+            display: none;
+        }
+        
+        .grid-overlay.show {
+            display: block;
+            background-image: 
+                linear-gradient(to right, rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .grid-overlay.show.large {
+            background-image: 
+                linear-gradient(to right, rgba(139, 92, 246, 0.15) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(139, 92, 246, 0.15) 1px, transparent 1px),
+                linear-gradient(to right, rgba(139, 92, 246, 0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(139, 92, 246, 0.08) 1px, transparent 1px);
+            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+        }
+        
+        #design-canvas {
+            display: block;
+            cursor: crosshair;
+            width: 794px;
+            height: 1123px;
+        }
+        
+        /* Canvas Objects (HTML overlay) */
+        .canvas-object {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+        }
+        
+        .canvas-object.selected {
+            outline: 2px solid #8B5CF6;
+            outline-offset: 2px;
+        }
+        
+        .canvas-object .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 2px solid #8B5CF6;
+            border-radius: 2px;
+        }
+        
+        .canvas-object .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+        .canvas-object .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+        .canvas-object .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+        .canvas-object .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+        
+        /* Right Panel */
+        .right-panel-container {
+            display: flex;
+            position: relative;
+        }
+        
+        .panel-toggle {
+            width: 24px;
+            height: 41px;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-right: none;
+            border-radius: 6px 0 0 6px;
+            color: #888;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: 0;
+        }
+        
+        .panel-toggle:hover {
+            background: #252525;
+            color: white;
+        }
+        
+        /* HTML Export Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .html-modal {
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .modal-header h3 {
+            color: white;
+            font-size: 1.1rem;
+        }
+        
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .modal-close:hover {
+            background: #2a2a2a;
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .code-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .code-btn {
+            padding: 8px 16px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .code-btn:hover {
+            background: #3a3a3a;
+            color: white;
+        }
+        
+        .code-btn.success {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10B981;
+            color: #10B981;
+        }
+        
+        .code-output {
+            flex: 1;
+            background: #0d0d0d;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            color: #10B981;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            resize: none;
+            min-height: 400px;
+        }
+        
+        .code-output:focus {
+            outline: none;
+            border-color: #8B5CF6;
+        }
+        
+        .right-panel {
+            width: 260px;
+            background: #1a1a1a;
+            border-left: 1px solid #2a2a2a;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .right-panel.collapsed {
+            width: 0;
+            border-left: none;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover {
+            color: #ccc;
+        }
+        
+        .tab.active {
+            color: white;
+            box-shadow: inset 0 -2px 0 #8B5CF6;
+        }
+        
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .layers-list {
+            padding: 8px;
+        }
+        
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #aaa;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        
+        .layer-item:hover {
+            background: #252525;
+        }
+        
+        .layer-item.selected {
+            background: rgba(139, 92, 246, 0.2);
+            color: white;
+        }
+        
+        .layer-icon {
+            width: 32px;
+            height: 32px;
+            background: #252525;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        
+        .layer-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .layer-item:hover .layer-actions {
+            opacity: 1;
+        }
+        
+        .layer-action-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: #3a3a3a;
+            color: #aaa;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        
+        .layer-action-btn:hover {
+            background: #4a4a4a;
+            color: white;
+        }
+        
+        .layer-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .layer-name-input {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #8B5CF6;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            outline: none;
+            min-width: 0;
+        }
+        
+        /* Property Panel */
+        .property-group {
+            margin-bottom: 20px;
+        }
+        
+        .property-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .property-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: #252525;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .property-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+        }
+        
+        .property-row {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .property-row .property-input {
+            flex: 1;
+        }
+        
+        .ratio-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            cursor: pointer;
+            color: #aaa;
+            font-size: 0.85rem;
+            user-select: none;
+        }
+        
+        .ratio-checkbox:hover {
+            color: #ccc;
+        }
+        
+        .ratio-checkbox input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #8B5CF6;
+            cursor: pointer;
+        }
+        
+        .ratio-checkbox span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Text style buttons */
+        .text-style-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .style-btn {
+            width: 40px;
+            height: 40px;
+            background: #252525;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #aaa;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .style-btn:hover {
+            background: #3a3a3a;
+            color: white;
+        }
+        
+        .style-btn.active {
+            background: #8B5CF6;
+            border-color: #8B5CF6;
+            color: white;
+        }
+        
+        .style-btn b {
+            font-weight: 900;
+        }
+        
+        .style-btn i {
+            font-style: italic;
+        }
+        
+        .style-btn u {
+            text-decoration: underline;
+        }
+        
+        /* Zoom Controls */
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1a1a1a;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #2a2a2a;
+            z-index: 1000;
+        }
+        
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #252525;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .zoom-btn:hover {
+            background: #3a3a3a;
+        }
+        
+        .zoom-btn.active {
+            background: #8B5CF6;
+            color: white;
+        }
+        
+        .zoom-level {
+            color: #aaa;
+            font-size: 0.85rem;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        /* Hidden panels */
+        .panel-content[data-tool] {
+            display: none;
+        }
+        
+        .panel-content[data-tool].active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="editor-header">
+        <a href="dashboard.html" class="logo">VIBE EDiT</a>
+        <div class="header-center">
+            <input type="text" class="project-name" value="제목 없는 디자인" id="projectName">
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" id="undoBtn">↩ 실행취소</button>
+            <button class="header-btn" id="redoBtn">↪ 다시실행</button>
+            <button class="header-btn" id="exportHtmlBtn">🔧 HTML 코드</button>
+            <button class="header-btn" id="downloadBtn">📥 다운로드</button>
+            <button class="header-btn primary" id="saveBtn">💾 저장</button>
+        </div>
+    </header>
+    
+    <div class="editor-layout">
+        <!-- Tools Sidebar -->
+        <aside class="tools-sidebar">
+            <button class="tool-btn active" data-tool="select">
+                <span class="icon">👆</span>
+                선택
+            </button>
+            <button class="tool-btn" data-tool="text">
+                <span class="icon">T</span>
+                텍스트
+            </button>
+            <button class="tool-btn" data-tool="image">
+                <span class="icon">🖼️</span>
+                이미지
+            </button>
+            <button class="tool-btn" data-tool="shape">
+                <span class="icon">⬜</span>
+                도형
+            </button>
+            <button class="tool-btn" data-tool="draw">
+                <span class="icon">✏️</span>
+                그리기
+            </button>
+        </aside>
+        
+        <!-- Left Panel -->
+        <aside class="left-panel">
+            <div class="panel-header" id="panelTitle">선택 도구</div>
+            <div class="panel-content active" data-tool="select">
+                <div class="panel-section">
+                    <div class="panel-section-title">선택된 요소</div>
+                    <p style="color: #666; font-size: 0.85rem;" id="selectionInfo">캔버스에서 요소를 클릭하여 선택하세요</p>
+                </div>
+                <div id="propertyPanel" style="display: none;">
+                    <div class="property-group" id="textPropertyGroup" style="display: none;">
+                        <label class="property-label">텍스트 내용</label>
+                        <textarea class="property-input" id="propText" rows="3" placeholder="텍스트 입력..." style="resize: vertical;"></textarea>
+                    </div>
+                    <div class="property-group" id="fontSizeGroup" style="display: none;">
+                        <label class="property-label">글자 크기</label>
+                        <input type="number" class="property-input" id="propFontSize" placeholder="크기" min="8" max="200">
+                    </div>
+                    <div class="property-group" id="textStyleGroup" style="display: none;">
+                        <label class="property-label">텍스트 스타일</label>
+                        <div class="text-style-buttons">
+                            <button type="button" class="style-btn" id="boldBtn" title="굵게 (Bold)"><b>B</b></button>
+                            <button type="button" class="style-btn" id="italicBtn" title="기울임 (Italic)"><i>I</i></button>
+                            <button type="button" class="style-btn" id="underlineBtn" title="밑줄 (Underline)"><u>U</u></button>
+                        </div>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">위치</label>
+                        <div class="property-row">
+                            <input type="number" class="property-input" id="propX" placeholder="X">
+                            <input type="number" class="property-input" id="propY" placeholder="Y">
+                        </div>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">크기</label>
+                        <div class="property-row">
+                            <input type="number" class="property-input" id="propWidth" placeholder="너비">
+                            <input type="number" class="property-input" id="propHeight" placeholder="높이">
+                        </div>
+                        <label class="ratio-checkbox" id="ratioCheckboxGroup" style="display: none;">
+                            <input type="checkbox" id="keepRatio" checked>
+                            <span>🔗 비율 유지</span>
+                        </label>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">색상</label>
+                        <input type="color" class="property-input" id="propColor" style="height: 40px; padding: 4px;">
+                    </div>
+                    <button class="header-btn" id="deleteBtn" style="width: 100%; margin-top: 16px; color: #EF4444; border-color: #EF4444;">🗑️ 삭제</button>
+                </div>
+            </div>
+            
+            <div class="panel-content" data-tool="text">
+                <div class="panel-section">
+                    <div class="panel-section-title">텍스트 추가</div>
+                    <div class="text-style-list">
+                        <div class="text-style-item heading" data-size="48">제목 추가</div>
+                        <div class="text-style-item subheading" data-size="32">부제목 추가</div>
+                        <div class="text-style-item body" data-size="18">본문 텍스트 추가</div>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-section-title">폰트</div>
+                    <select class="property-input" id="fontFamily">
+                        <option value="Arial">Arial</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Verdana">Verdana</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="panel-content" data-tool="image">
+                <div class="panel-section">
+                    <div class="panel-section-title">이미지 업로드</div>
+                    <label class="element-item" style="aspect-ratio: auto; padding: 24px; flex-direction: column; gap: 8px; cursor: pointer;">
+                        <span style="font-size: 2rem;">📁</span>
+                        <span style="color: #888; font-size: 0.8rem;">클릭하여 업로드</span>
+                        <input type="file" accept="image/*" id="imageUpload" style="display: none;">
+                    </label>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-section-title">샘플 이미지</div>
+                    <div class="element-grid">
+                        <div class="element-item sample-image" data-src="https://picsum.photos/200/200?random=1">🏔️</div>
+                        <div class="element-item sample-image" data-src="https://picsum.photos/200/200?random=2">🌊</div>
+                        <div class="element-item sample-image" data-src="https://picsum.photos/200/200?random=3">🌅</div>
+                        <div class="element-item sample-image" data-src="https://picsum.photos/200/200?random=4">🌺</div>
+                        <div class="element-item sample-image" data-src="https://picsum.photos/200/200?random=5">🏙️</div>
+                        <div class="element-item sample-image" data-src="https://picsum.photos/200/200?random=6">🌲</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-content" data-tool="shape">
+                <div class="panel-section">
+                    <div class="panel-section-title">기본 도형</div>
+                    <div class="element-grid">
+                        <div class="element-item shape-item" data-shape="rect">⬜</div>
+                        <div class="element-item shape-item" data-shape="circle">⭕</div>
+                        <div class="element-item shape-item" data-shape="triangle">🔺</div>
+                        <div class="element-item shape-item" data-shape="star">⭐</div>
+                        <div class="element-item shape-item" data-shape="diamond">🔷</div>
+                        <div class="element-item shape-item" data-shape="heart">❤️</div>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-section-title">도형 색상</div>
+                    <div class="property-group">
+                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+                            <input type="color" class="property-input" id="shapeColorPicker" value="#8B5CF6" style="width: 60px; height: 40px; padding: 2px; box-sizing: border-box;">
+                            <input type="text" class="property-input" id="shapeColorText" value="#8B5CF6" style="flex: 1; height: 40px; padding: 10px 12px; box-sizing: border-box; text-transform: uppercase;">
+                        </div>
+                    </div>
+                    <div class="color-grid" id="shapeColorGrid">
+                        <div class="color-item selected" style="background: #8B5CF6;" data-color="#8B5CF6"></div>
+                        <div class="color-item" style="background: #EC4899;" data-color="#EC4899"></div>
+                        <div class="color-item" style="background: #EF4444;" data-color="#EF4444"></div>
+                        <div class="color-item" style="background: #F59E0B;" data-color="#F59E0B"></div>
+                        <div class="color-item" style="background: #10B981;" data-color="#10B981"></div>
+                        <div class="color-item" style="background: #06B6D4;" data-color="#06B6D4"></div>
+                        <div class="color-item" style="background: #3B82F6;" data-color="#3B82F6"></div>
+                        <div class="color-item" style="background: #1F2937;" data-color="#1F2937"></div>
+                        <div class="color-item" style="background: #FFFFFF; border: 1px solid #3a3a3a;" data-color="#FFFFFF"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-content" data-tool="draw">
+                <div class="panel-section">
+                    <div class="panel-section-title">브러시 설정</div>
+                    <div class="property-group">
+                        <label class="property-label">브러시 크기</label>
+                        <input type="range" id="brushSize" min="1" max="50" value="5" style="width: 100%;">
+                        <span id="brushSizeValue" style="color: #888; font-size: 0.8rem;">5px</span>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <div class="panel-section-title">브러시 색상</div>
+                    <div class="property-group">
+                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+                            <input type="color" class="property-input" id="brushColorPicker" value="#000000" style="width: 60px; height: 40px; padding: 2px; box-sizing: border-box;">
+                            <input type="text" class="property-input" id="brushColorText" value="#000000" style="flex: 1; height: 40px; padding: 10px 12px; box-sizing: border-box; text-transform: uppercase;">
+                        </div>
+                    </div>
+                    <div class="color-grid" id="brushColorGrid">
+                        <div class="color-item selected" style="background: #000000;" data-color="#000000"></div>
+                        <div class="color-item" style="background: #FFFFFF; border: 1px solid #3a3a3a;" data-color="#FFFFFF"></div>
+                        <div class="color-item" style="background: #EF4444;" data-color="#EF4444"></div>
+                        <div class="color-item" style="background: #F59E0B;" data-color="#F59E0B"></div>
+                        <div class="color-item" style="background: #10B981;" data-color="#10B981"></div>
+                        <div class="color-item" style="background: #3B82F6;" data-color="#3B82F6"></div>
+                    </div>
+                </div>
+                <div class="panel-section">
+                    <button class="header-btn" id="clearDrawing" style="width: 100%;">🗑️ 그리기 지우기</button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Canvas Area -->
+        <main class="canvas-area">
+            <div class="canvas-container">
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <canvas id="design-canvas" width="794" height="1123"></canvas>
+                    <div class="grid-overlay" id="gridOverlay"></div>
+                    <div id="objectsLayer"></div>
+                    <!-- Inline text editor -->
+                    <textarea id="inlineTextEditor" style="
+                        display: none;
+                        position: absolute;
+                        background: transparent;
+                        border: 2px solid #8B5CF6;
+                        outline: none;
+                        resize: none;
+                        overflow: hidden;
+                        font-family: Arial;
+                        color: #000;
+                        padding: 0;
+                        margin: 0;
+                        z-index: 100;
+                    "></textarea>
+                </div>
+            </div>
+            
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoomOut">−</button>
+                <span class="zoom-level" id="zoomLevel">100%</span>
+                <button class="zoom-btn" id="zoomIn">+</button>
+                <span style="width: 1px; height: 20px; background: #3a3a3a; margin: 0 8px;"></span>
+                <button class="zoom-btn" id="gridToggle" title="격자선 (G)">⊞</button>
+            </div>
+    </main>
+        
+        <!-- Right Panel -->
+        <div class="right-panel-container">
+            <button class="panel-toggle" id="panelToggle" title="패널 접기/펼치기">›</button>
+            <aside class="right-panel" id="rightPanel">
+                <div class="tabs">
+                <button class="tab active" data-tab="layers">레이어</button>
+                <button class="tab" data-tab="settings">설정</button>
+            </div>
+            
+            <!-- 레이어 탭 -->
+            <div class="tab-content active" id="layersTab">
+                <div class="layers-list" id="layersList">
+                    <div class="layer-item" data-id="background">
+                        <div class="layer-icon">📄</div>
+                        <span>배경</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 설정 탭 -->
+            <div class="tab-content" id="settingsTab" style="display: none; padding: 16px;">
+                <div class="property-group">
+                    <label class="property-label">캔버스 크기</label>
+                    <div class="property-row" style="align-items: center;">
+                        <input type="number" class="property-input" id="canvasWidth" value="794" placeholder="너비" style="flex: 1;">
+                        <span style="color: #666; padding: 0 8px;">×</span>
+                        <input type="number" class="property-input" id="canvasHeight" value="1123" placeholder="높이" style="flex: 1;">
+                    </div>
+                    <button class="header-btn" id="applyCanvasSize" style="width: 100%; margin-top: 8px;">적용</button>
+                </div>
+                
+                <div class="property-group">
+                    <label class="property-label">프리셋</label>
+                    <select class="property-input" id="canvasPreset">
+                        <option value="">사용자 지정</option>
+                        <option value="794x1123" selected>A4 (794×1123)</option>
+                        <option value="1123x794">A4 가로 (1123×794)</option>
+                        <option value="1080x1080">인스타그램 (1080×1080)</option>
+                        <option value="1200x628">페이스북 (1200×628)</option>
+                        <option value="1280x720">유튜브 썸네일 (1280×720)</option>
+                        <option value="1920x1080">프레젠테이션 (1920×1080)</option>
+                        <option value="1080x1920">인스타 스토리 (1080×1920)</option>
+                        <option value="2480x3508">A4 인쇄용 (2480×3508)</option>
+                    </select>
+                </div>
+                
+                <div class="property-group">
+                    <label class="ratio-checkbox" style="margin-bottom: 12px;">
+                        <input type="checkbox" id="transparentBg" style="width: 16px; height: 16px; accent-color: #8B5CF6; cursor: pointer;">
+                        <span>배경 없음 (투명)</span>
+                    </label>
+                    <label class="property-label">배경색</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="color" class="property-input" id="canvasBgColor" value="#FFFFFF" style="width: 60px; height: 40px; padding: 2px;">
+                        <input type="text" class="property-input" id="canvasBgColorText" value="#FFFFFF" style="flex: 1; text-transform: uppercase;">
+                    </div>
+                </div>
+                
+                <div class="property-group" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #2a2a2a;">
+                    <label class="property-label">내보내기 형식</label>
+                    <select class="property-input" id="exportFormat">
+                        <option value="png">PNG (투명 배경 지원)</option>
+                        <option value="jpeg">JPEG (작은 파일 크기)</option>
+                    </select>
+                </div>
+            </div>
+            </aside>
+        </div>
+    </div>
+    
+    <!-- HTML 내보내기 모달 -->
+    <div class="modal-overlay" id="htmlModalOverlay">
+        <div class="html-modal">
+            <div class="modal-header">
+                <h3>HTML 코드 내보내기</h3>
+                <button class="modal-close" id="closeHtmlModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="code-actions">
+                    <button class="code-btn" id="copyHtmlBtn">📋 복사</button>
+                    <button class="code-btn" id="downloadHtmlBtn">📥 HTML 파일 다운로드</button>
+                </div>
+                <textarea class="code-output" id="htmlCodeOutput" readonly></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/editor.js"></script>
+</body>
+</html>
+

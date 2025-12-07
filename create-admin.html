@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 계정 생성 - VIBE EDiT</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 {
+            color: #8B5CF6;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22C55E;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #EF4444;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #8B5CF6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #7C3AED;
+        }
+        .credentials {
+            background: #252525;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .credentials p {
+            margin: 8px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>관리자 계정 생성</h1>
+        <div id="result"></div>
+        <button onclick="createAdmin()">관리자 계정 생성</button>
+        <div style="margin-top: 30px;">
+            <a href="login.html" style="color: #8B5CF6; text-decoration: none;">로그인 페이지로 이동</a>
+        </div>
+    </div>
+    
+    <script>
+        function createAdmin() {
+            const adminId = 'hby';
+            const adminPassword = 'qhfhd!@123';
+            const adminName = '관리자';
+            
+            // 기존 사용자 목록 가져오기
+            const users = JSON.parse(localStorage.getItem('vibe_users') || '[]');
+            
+            // 이미 관리자 계정이 있는지 확인
+            const existingAdmin = users.find(u => u.email === adminId);
+            
+            const resultDiv = document.getElementById('result');
+            
+            if (existingAdmin) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        관리자 계정이 이미 존재합니다.
+                    </div>
+                    <div class="credentials">
+                        <p><strong>아이디:</strong> ${existingAdmin.email}</p>
+                        <p><strong>이름:</strong> ${existingAdmin.name || '관리자'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 관리자 계정 추가
+            users.push({
+                name: adminName,
+                email: adminId,
+                password: adminPassword,
+                role: 'admin',
+                createdAt: Date.now()
+            });
+            
+            localStorage.setItem('vibe_users', JSON.stringify(users));
+            
+            resultDiv.innerHTML = `
+                <div class="info">
+                    ✅ 관리자 계정이 생성되었습니다!
+                </div>
+                <div class="credentials">
+                    <p><strong>아이디:</strong> ${adminId}</p>
+                    <p><strong>비밀번호:</strong> ${adminPassword}</p>
+                    <p><strong>이름:</strong> ${adminName}</p>
+                </div>
+                <p style="color: #666; margin-top: 20px;">이제 로그인 페이지에서 로그인할 수 있습니다.</p>
+            `;
+        }
+        
+        // 페이지 로드 시 자동으로 실행
+        window.addEventListener('DOMContentLoaded', createAdmin);
+    </script>
+</body>
+</html>
+

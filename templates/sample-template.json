@@ -1,0 +1,9 @@
+{
+  "canvas": { "width": 1080, "height": 1920, "background": "#FFFFFF" },
+  "objects": [
+    { "type": "text", "value": "Sample Title", "x": 100, "y": 80, "fontSize": 42, "color": "#000" },
+    { "type": "text", "value": "Sample Body Text", "x": 100, "y": 150, "fontSize": 24, "color": "#333" },
+    { "type": "image", "src": "/uploads/sample-image.png", "x": 200, "y": 300, "width": 400, "height": 300 },
+    { "type": "rectangle", "x": 50, "y": 400, "width": 500, "height": 200, "fill": "#FFCC00", "stroke": "#000", "strokeWidth": 2 }
+  ]
+}

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIBE EDiT - 디자인 에디터</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0f0f0f;
+            color: #ffffff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: #1a1a1a;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 16px 24px;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #8B5CF6;
+            text-decoration: none;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #ccc;
+            border: 1px solid #3a3a3a;
+        }
+        
+        .btn-secondary:hover {
+            background: #252525;
+            color: white;
+        }
+        
+        .btn-primary {
+            background: #8B5CF6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #7C3AED;
+        }
+        
+        /* Hero Section */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 24px;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-large {
+            padding: 16px 32px;
+            font-size: 1.1rem;
+        }
+        
+        /* Features */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 24px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+        
+        .feature-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 32px;
+            transition: all 0.2s;
+        }
+        
+        .feature-card:hover {
+            border-color: #8B5CF6;
+            transform: translateY(-4px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        /* Footer */
+        .footer {
+            background: #1a1a1a;
+            border-top: 1px solid #2a2a2a;
+            padding: 40px 24px;
+            text-align: center;
+            color: #666;
+            margin-top: 80px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.1rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">VIBE EDiT</a>
+            <div class="header-actions">
+                <a href="login.html" class="btn btn-secondary">로그인</a>
+                <a href="register.html" class="btn btn-primary">시작하기</a>
+            </div>
+        </div>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <h1>아름다운 디자인을<br>쉽게 만들어보세요</h1>
+            <p>전문가 수준의 디자인 도구로 아이디어를 현실로 만들어보세요</p>
+            <div class="hero-actions">
+                <a href="register.html" class="btn btn-primary btn-large">무료로 시작하기</a>
+                <a href="login.html" class="btn btn-secondary btn-large">로그인</a>
+            </div>
+        </section>
+        
+        <section class="features">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>직관적인 에디터</h3>
+                    <p>드래그 앤 드롭으로 쉽게 디자인을 만들 수 있습니다</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📐</div>
+                    <h3>정확한 도구</h3>
+                    <p>텍스트, 이미지, 도형 등 다양한 요소를 자유롭게 배치하세요</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>클라우드 저장</h3>
+                    <p>작업한 디자인을 안전하게 저장하고 언제든지 수정하세요</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <p>&copy; 2024 VIBE EDiT. All rights reserved.</p>
+    </footer>
+</body>
+</html>

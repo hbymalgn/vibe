@@ -1,0 +1,27 @@
+# Cloudflare Pages Configuration
+name = "vibeedit"
+compatibility_date = "2024-01-01"
+
+# Pages specific settings
+pages_build_output_dir = "./"
+
+# KV Namespace binding (create in Cloudflare Dashboard)
+[[kv_namespaces]]
+binding = "VIBE_KV"
+id = "your-kv-namespace-id"  # Replace with actual KV namespace ID
+preview_id = "your-preview-kv-namespace-id"  # For local development
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "vibe-database"
+database_id = "94c6c854-ea9d-429b-b287-bdabfc9f678b"
+
+# Environment variables (set in Cloudflare Dashboard > Pages > Settings > Environment variables)
+# JWT_SECRET = "your-secret-key"
+# BASE_URL = "https://your-project.pages.dev"
+#
+# Google OAuth (get from https://console.cloud.google.com/apis/credentials)
+# GOOGLE_CLIENT_ID = "your-client-id.apps.googleusercontent.com"
+# GOOGLE_CLIENT_SECRET = "your-client-secret"
+
