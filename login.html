@@ -229,7 +229,13 @@
                         },
                         body: JSON.stringify({ id, password }),
                     })
-                    .then(response => response.json())
+                    .then(async response => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.message || data.error || '서버 오류가 발생했습니다.');
+                        }
+                        return data;
+                    })
                     .then(data => {
                         if (data.success) {
                             localStorage.setItem('vibe_user', JSON.stringify(data.user));
@@ -237,26 +243,26 @@
                             window.location.href = '/dashboard.html';
                         } else {
                             if (errorMessage) {
-                                errorMessage.textContent = data.message || '아이디 또는 비밀번호가 올바르지 않습니다.';
+                                errorMessage.textContent = data.message || data.error || '아이디 또는 비밀번호가 올바르지 않습니다.';
                                 errorMessage.classList.add('show');
                                 setTimeout(() => {
                                     errorMessage.classList.remove('show');
                                 }, 3000);
                             } else {
-                                alert(data.message);
+                                alert(data.message || data.error);
                             }
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         if (errorMessage) {
-                            errorMessage.textContent = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+                            errorMessage.textContent = error.message || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
                             errorMessage.classList.add('show');
                             setTimeout(() => {
                                 errorMessage.classList.remove('show');
                             }, 3000);
                         } else {
-                            alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                            alert(error.message || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
                         }
                     });
                 });

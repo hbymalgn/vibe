@@ -3,7 +3,20 @@ export async function onRequestPost(context) {
     const { request, env } = context;
     
     try {
-        const { id, name, password } = await request.json();
+        // D1 데이터베이스 연결 확인
+        if (!env || !env.DB) {
+            console.error('D1 database not available');
+            return new Response(
+                JSON.stringify({ success: false, message: '데이터베이스 연결 오류가 발생했습니다.' }),
+                { 
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
+        
+        const body = await request.json();
+        const { id, name, password } = body;
         
         if (!id || !name || !password) {
             return new Response(
@@ -68,7 +81,11 @@ export async function onRequestPost(context) {
     } catch (error) {
         console.error('Register error:', error);
         return new Response(
-            JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }),
+            JSON.stringify({ 
+                success: false, 
+                message: '서버 오류가 발생했습니다.',
+                error: error.message 
+            }),
             { 
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }

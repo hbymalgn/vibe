@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 테스트 - VIBE EDiT</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #0f0f0f;
+            color: #fff;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #8B5CF6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #7C3AED;
+        }
+        pre {
+            background: #252525;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            background: #252525;
+            color: white;
+            border: 1px solid #3a3a3a;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>API 테스트 페이지</h1>
+    
+    <div class="test-section">
+        <h2>1. 회원가입 테스트</h2>
+        <input type="text" id="regId" placeholder="아이디" value="testuser">
+        <input type="text" id="regName" placeholder="이름" value="테스트 사용자">
+        <input type="password" id="regPassword" placeholder="비밀번호" value="test123">
+        <button onclick="testRegister()">회원가입</button>
+        <pre id="registerResult"></pre>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 로그인 테스트</h2>
+        <input type="text" id="loginId" placeholder="아이디" value="testuser">
+        <input type="password" id="loginPassword" placeholder="비밀번호" value="test123">
+        <button onclick="testLogin()">로그인</button>
+        <pre id="loginResult"></pre>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 관리자 계정 생성 테스트</h2>
+        <input type="text" id="adminId" placeholder="아이디" value="hby">
+        <input type="text" id="adminName" placeholder="이름" value="관리자">
+        <input type="password" id="adminPassword" placeholder="비밀번호" value="qhfhd!@123">
+        <button onclick="testCreateAdmin()">관리자 생성</button>
+        <pre id="adminResult"></pre>
+    </div>
+    
+    <script>
+        async function testRegister() {
+            const id = document.getElementById('regId').value;
+            const name = document.getElementById('regName').value;
+            const password = document.getElementById('regPassword').value;
+            const resultDiv = document.getElementById('registerResult');
+            
+            try {
+                resultDiv.textContent = '요청 중...';
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id, name, password }),
+                });
+                
+                const data = await response.json();
+                resultDiv.textContent = `Status: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}\n\n${error.stack}`;
+            }
+        }
+        
+        async function testLogin() {
+            const id = document.getElementById('loginId').value;
+            const password = document.getElementById('loginPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                resultDiv.textContent = '요청 중...';
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id, password }),
+                });
+                
+                const data = await response.json();
+                resultDiv.textContent = `Status: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}\n\n${error.stack}`;
+            }
+        }
+        
+        async function testCreateAdmin() {
+            const id = document.getElementById('adminId').value;
+            const name = document.getElementById('adminName').value;
+            const password = document.getElementById('adminPassword').value;
+            const resultDiv = document.getElementById('adminResult');
+            
+            try {
+                resultDiv.textContent = '요청 중...';
+                const response = await fetch('/api/admin/create-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id, name, password }),
+                });
+                
+                const data = await response.json();
+                resultDiv.textContent = `Status: ${response.status}\n\nResponse:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}\n\n${error.stack}`;
+            }
+        }
+    </script>
+</body>
+</html>
+
