@@ -5,9 +5,16 @@ export async function onRequestPost(context) {
     try {
         // D1 데이터베이스 연결 확인
         if (!env || !env.DB) {
-            console.error('D1 database not available');
+            console.error('D1 database not available', { envExists: !!env, dbExists: !!env?.DB });
             return new Response(
-                JSON.stringify({ success: false, message: '데이터베이스 연결 오류가 발생했습니다.' }),
+                JSON.stringify({ 
+                    success: false, 
+                    message: '데이터베이스 연결 오류가 발생했습니다.',
+                    debug: {
+                        envExists: !!env,
+                        dbExists: !!env?.DB
+                    }
+                }),
                 { 
                     status: 500,
                     headers: { 'Content-Type': 'application/json' }
@@ -17,6 +24,8 @@ export async function onRequestPost(context) {
         
         const body = await request.json();
         const { id, name, password } = body;
+        
+        console.log('Register attempt:', { id, name, hasPassword: !!password });
         
         if (!id || !name || !password) {
             return new Response(
