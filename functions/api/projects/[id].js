@@ -4,6 +4,17 @@ export async function onRequestGet(context) {
     const { id } = params;
     
     try {
+        // D1 데이터베이스 연결 확인
+        if (!env || !env.DB) {
+            return new Response(
+                JSON.stringify({ success: false, message: '데이터베이스 연결 오류가 발생했습니다.' }),
+                { 
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
+        
         const project = await env.DB.prepare(
             'SELECT * FROM projects WHERE id = ?'
         ).bind(id).first();
@@ -19,7 +30,12 @@ export async function onRequestGet(context) {
         }
         
         // JSON 데이터 파싱
-        project.data = JSON.parse(project.data);
+        try {
+            project.data = JSON.parse(project.data);
+        } catch (parseError) {
+            console.error('Error parsing project data:', parseError);
+            project.data = {};
+        }
         
         return new Response(
             JSON.stringify({
@@ -35,7 +51,11 @@ export async function onRequestGet(context) {
     } catch (error) {
         console.error('Get project error:', error);
         return new Response(
-            JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }),
+            JSON.stringify({ 
+                success: false, 
+                message: '서버 오류가 발생했습니다.',
+                error: error.message 
+            }),
             { 
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
@@ -49,14 +69,35 @@ export async function onRequestPut(context) {
     const { id } = params;
     
     try {
+        // D1 데이터베이스 연결 확인
+        if (!env || !env.DB) {
+            return new Response(
+                JSON.stringify({ success: false, message: '데이터베이스 연결 오류가 발생했습니다.' }),
+                { 
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
+        
         const { name, data, thumbnail } = await request.json();
+        
+        if (!name || !data) {
+            return new Response(
+                JSON.stringify({ success: false, message: '필수 필드가 누락되었습니다.' }),
+                { 
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
         
         const now = Date.now();
         const result = await env.DB.prepare(
             'UPDATE projects SET name = ?, data = ?, thumbnail = ?, updated_at = ? WHERE id = ?'
         ).bind(
-            name || null,
-            data ? JSON.stringify(data) : null,
+            name,
+            JSON.stringify(data),
             thumbnail || null,
             now,
             id
@@ -80,7 +121,11 @@ export async function onRequestPut(context) {
     } catch (error) {
         console.error('Update project error:', error);
         return new Response(
-            JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }),
+            JSON.stringify({ 
+                success: false, 
+                message: '서버 오류가 발생했습니다.',
+                error: error.message 
+            }),
             { 
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
@@ -94,6 +139,17 @@ export async function onRequestDelete(context) {
     const { id } = params;
     
     try {
+        // D1 데이터베이스 연결 확인
+        if (!env || !env.DB) {
+            return new Response(
+                JSON.stringify({ success: false, message: '데이터베이스 연결 오류가 발생했습니다.' }),
+                { 
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
+        
         const result = await env.DB.prepare(
             'DELETE FROM projects WHERE id = ?'
         ).bind(id).run();
@@ -116,7 +172,11 @@ export async function onRequestDelete(context) {
     } catch (error) {
         console.error('Delete project error:', error);
         return new Response(
-            JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }),
+            JSON.stringify({ 
+                success: false, 
+                message: '서버 오류가 발생했습니다.',
+                error: error.message 
+            }),
             { 
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }

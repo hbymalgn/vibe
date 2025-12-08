@@ -528,94 +528,121 @@
             });
         }
         
-        // Load user projects
-        function loadProjects() {
+        // Load user projects from D1 database
+        async function loadProjects() {
             const projectsGrid = document.getElementById('projectsGrid');
             if (!projectsGrid) return;
             
-            // Load from localStorage
-            const savedProjects = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && (key.startsWith('vibe_project_') || key === 'vibe_project')) {
-                    try {
-                        const projectData = localStorage.getItem(key);
-                        if (projectData) {
-                            const project = JSON.parse(projectData);
-                            // Check if it's a project object (has name or canvas property)
-                            if (project.name || project.canvas || project.objects) {
-                                project.id = key;
-                                savedProjects.push(project);
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Error loading project:', e);
-                    }
-                }
-            }
-            
-            if (savedProjects.length === 0) {
+            // Get current user
+            const currentUser = JSON.parse(localStorage.getItem('vibe_user') || 'null');
+            if (!currentUser || !currentUser.id) {
                 projectsGrid.innerHTML = `
                     <div class="empty-state" style="grid-column: 1 / -1;">
-                        <div class="empty-state-icon">🎨</div>
-                        <h3>아직 디자인이 없습니다</h3>
-                        <p>새 디자인을 만들어보세요</p>
-                        <a href="editor.html" class="create-btn">+ 새 디자인 만들기</a>
+                        <div class="empty-state-icon">🔒</div>
+                        <h3>로그인이 필요합니다</h3>
+                        <p>프로젝트를 보려면 로그인해주세요</p>
+                        <a href="login.html" class="create-btn">로그인</a>
                     </div>
                 `;
                 return;
             }
             
-            // Sort by date (newest first)
-            savedProjects.sort((a, b) => {
-                const dateA = a.updatedAt || a.createdAt || 0;
-                const dateB = b.updatedAt || b.createdAt || 0;
-                return dateB - dateA;
-            });
-            
-            projectsGrid.innerHTML = savedProjects.map(project => {
-                const date = new Date(project.updatedAt || project.createdAt || Date.now());
-                const dateStr = date.toLocaleDateString('ko-KR', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                });
+            try {
+                // Load projects from API
+                const response = await fetch(`/api/projects?user_id=${encodeURIComponent(currentUser.id)}`);
+                const result = await response.json();
                 
-                return `
-                    <div class="project-card" data-id="${project.id}">
-                        <div class="project-actions">
-                            <button class="action-btn danger" onclick="deleteProject('${project.id}', event)" title="삭제">🗑️</button>
+                if (!result.success || !result.projects || result.projects.length === 0) {
+                    projectsGrid.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-state-icon">🎨</div>
+                            <h3>아직 디자인이 없습니다</h3>
+                            <p>새 디자인을 만들어보세요</p>
+                            <a href="editor.html" class="create-btn">+ 새 디자인 만들기</a>
                         </div>
-                        <div class="project-thumbnail">
-                            <div class="project-thumbnail-placeholder">📄</div>
-                        </div>
-                        <div class="project-info">
-                            <div class="project-title">${project.name || '제목 없는 디자인'}</div>
-                            <div class="project-meta">
-                                <span>${dateStr}</span>
+                    `;
+                    return;
+                }
+                
+                const projects = result.projects;
+                
+                projectsGrid.innerHTML = projects.map(project => {
+                    const date = new Date(project.updated_at || project.created_at || Date.now());
+                    const dateStr = date.toLocaleDateString('ko-KR', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    
+                    return `
+                        <div class="project-card" data-id="${project.id}">
+                            <div class="project-actions">
+                                <button class="action-btn danger" onclick="deleteProject('${project.id}', event)" title="삭제">🗑️</button>
+                            </div>
+                            <div class="project-thumbnail">
+                                ${project.thumbnail ? 
+                                    `<img src="${project.thumbnail}" alt="${project.name}">` : 
+                                    `<div class="project-thumbnail-placeholder">📄</div>`
+                                }
+                            </div>
+                            <div class="project-info">
+                                <div class="project-title">${project.name || '제목 없는 디자인'}</div>
+                                <div class="project-meta">
+                                    <span>${dateStr}</span>
+                                </div>
                             </div>
                         </div>
+                    `;
+                }).join('');
+                
+                // Add click handlers
+                document.querySelectorAll('.project-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        if (!e.target.closest('.project-actions')) {
+                            const projectId = card.getAttribute('data-id');
+                            window.location.href = `editor.html?id=${projectId}`;
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                projectsGrid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>프로젝트를 불러오는 중 오류가 발생했습니다</h3>
+                        <p>${error.message}</p>
+                        <button class="create-btn" onclick="loadProjects()">다시 시도</button>
                     </div>
                 `;
-            }).join('');
-            
-            // Add click handlers
-            document.querySelectorAll('.project-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (!e.target.closest('.project-actions')) {
-                        const projectId = card.getAttribute('data-id');
-                        window.location.href = `editor.html?id=${projectId}`;
-                    }
-                });
-            });
+            }
         }
         
-        // Delete project
-        function deleteProject(projectId, event) {
+        // Delete project from D1 database
+        async function deleteProject(projectId, event) {
             event.stopPropagation();
-            if (confirm('이 디자인을 삭제하시겠습니까?')) {
-                localStorage.removeItem(projectId);
-                loadProjects();
+            if (!confirm('이 디자인을 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/projects/${projectId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Reload projects
+                    await loadProjects();
+                } else {
+                    alert('삭제 중 오류가 발생했습니다: ' + (result.message || '알 수 없는 오류'));
+                }
+            } catch (error) {
+                console.error('Error deleting project:', error);
+                alert('삭제 중 오류가 발생했습니다: ' + error.message);
             }
         }
         

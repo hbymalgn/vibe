@@ -3,6 +3,17 @@ export async function onRequestGet(context) {
     const { request, env } = context;
     
     try {
+        // D1 데이터베이스 연결 확인
+        if (!env || !env.DB) {
+            return new Response(
+                JSON.stringify({ success: false, message: '데이터베이스 연결 오류가 발생했습니다.' }),
+                { 
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
+        
         // URL에서 user_id 파라미터 가져오기
         const url = new URL(request.url);
         const userId = url.searchParams.get('user_id');
@@ -19,10 +30,10 @@ export async function onRequestGet(context) {
         
         // 사용자의 프로젝트 목록 조회
         const result = await env.DB.prepare(
-            'SELECT * FROM projects WHERE user_id = ? ORDER BY updated_at DESC'
+            'SELECT id, user_id, name, thumbnail, created_at, updated_at FROM projects WHERE user_id = ? ORDER BY updated_at DESC'
         ).bind(userId).all();
         
-        // data 필드는 JSON 문자열이므로 파싱하지 않고 그대로 반환 (필요시 클라이언트에서 파싱)
+        // data 필드는 제외하고 반환 (목록에서는 불필요)
         return new Response(
             JSON.stringify({
                 success: true,
@@ -37,7 +48,11 @@ export async function onRequestGet(context) {
     } catch (error) {
         console.error('Get projects error:', error);
         return new Response(
-            JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }),
+            JSON.stringify({ 
+                success: false, 
+                message: '서버 오류가 발생했습니다.',
+                error: error.message 
+            }),
             { 
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
@@ -50,6 +65,17 @@ export async function onRequestPost(context) {
     const { request, env } = context;
     
     try {
+        // D1 데이터베이스 연결 확인
+        if (!env || !env.DB) {
+            return new Response(
+                JSON.stringify({ success: false, message: '데이터베이스 연결 오류가 발생했습니다.' }),
+                { 
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                }
+            );
+        }
+        
         const { user_id, name, data, thumbnail } = await request.json();
         
         if (!user_id || !name || !data) {
@@ -94,7 +120,11 @@ export async function onRequestPost(context) {
     } catch (error) {
         console.error('Create project error:', error);
         return new Response(
-            JSON.stringify({ success: false, message: '서버 오류가 발생했습니다.' }),
+            JSON.stringify({ 
+                success: false, 
+                message: '서버 오류가 발생했습니다.',
+                error: error.message 
+            }),
             { 
                 status: 500,
                 headers: { 'Content-Type': 'application/json' }
