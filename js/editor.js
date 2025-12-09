@@ -1705,6 +1705,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // HTML 코드 새로 생성 버튼
+    const refreshHtmlBtn = document.getElementById('refreshHtmlBtn');
+    if (refreshHtmlBtn && htmlCodeOutput) {
+        refreshHtmlBtn.addEventListener('click', () => {
+            const html = generateHTML();
+            htmlCodeOutput.value = html;
+            refreshHtmlBtn.textContent = '✓ 새로 생성됨';
+            setTimeout(() => {
+                refreshHtmlBtn.textContent = '🔄 새로 생성';
+            }, 2000);
+        });
+    }
+
     if (closeHtmlModal) {
         closeHtmlModal.addEventListener('click', () => {
             if (htmlModalOverlay) {
@@ -1736,7 +1749,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (downloadHtmlBtn) {
         downloadHtmlBtn.addEventListener('click', () => {
-            const html = generateHTML();
+            // textarea의 현재 내용을 사용 (수정된 HTML일 수 있음)
+            const html = htmlCodeOutput ? htmlCodeOutput.value : generateHTML();
             const blob = new Blob([html], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
