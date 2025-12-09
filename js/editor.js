@@ -494,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectTool('select');
                 selectObject(textDiv);
                 updateLayers();
+                saveState(); // 히스토리 저장
             }, { once: true });
         }, 100);
     }
@@ -742,6 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
             makeDraggable(imageDiv);
             // Update layers
             updateLayers();
+            saveState(); // 히스토리 저장
             // 이미지 추가 후 선택 도구로 전환하여 바로 이동/편집 가능하도록
             selectTool('select');
             selectObject(imageDiv);
@@ -831,6 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         makeDraggable(shapeDiv);
         // Update layers
         updateLayers();
+        saveState(); // 히스토리 저장
         // 도형 추가 후 선택 도구로 전환하여 바로 이동/편집 가능하도록
         selectTool('select');
         selectObject(shapeDiv);
@@ -995,6 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isResizing = false;
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
+            saveState(); // 리사이즈 완료 시 히스토리 저장
         }
     }
 
@@ -1304,6 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedObject.remove();
             deselectObject();
             updateLayers();
+            saveState(); // 히스토리 저장
         }
     }
 
@@ -1568,15 +1573,44 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUndoRedoButtons();
     }
 
+    function restoreState(state) {
+        // 모든 객체 제거
+        while (objectsLayer.firstChild) {
+            objectsLayer.removeChild(objectsLayer.firstChild);
+        }
+        
+        // 상태 복원
+        state.objects.forEach(obj => {
+            const element = obj.element.cloneNode(true);
+            element.style.position = 'absolute';
+            element.style.left = `${obj.x}px`;
+            element.style.top = `${obj.y}px`;
+            objectsLayer.appendChild(element);
+            
+            // 이벤트 리스너 다시 연결
+            if (element.classList.contains('text-object')) {
+                makeDraggable(element);
+            } else if (element.classList.contains('image-object') || element.classList.contains('shape-object')) {
+                makeDraggable(element);
+            }
+        });
+        
+        updateLayers();
+    }
+
     function updateUndoRedoButtons() {
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
         
         if (undoBtn) {
             undoBtn.disabled = historyIndex <= 0;
+            undoBtn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
+            undoBtn.style.cursor = historyIndex <= 0 ? 'not-allowed' : 'pointer';
         }
         if (redoBtn) {
             redoBtn.disabled = historyIndex >= history.length - 1;
+            redoBtn.style.opacity = historyIndex >= history.length - 1 ? '0.5' : '1';
+            redoBtn.style.cursor = historyIndex >= history.length - 1 ? 'not-allowed' : 'pointer';
         }
     }
 
@@ -1707,6 +1741,82 @@ document.addEventListener('DOMContentLoaded', () => {
             a.download = 'design.html';
             a.click();
             URL.revokeObjectURL(url);
+        });
+    }
+
+    // HTML 소스코드를 이미지로 변환하는 기능
+    const convertHtmlToImageBtn = document.getElementById('convertHtmlToImageBtn');
+    if (convertHtmlToImageBtn && htmlCodeOutput) {
+        convertHtmlToImageBtn.addEventListener('click', async () => {
+            const htmlCode = htmlCodeOutput.value;
+            if (!htmlCode) {
+                alert('HTML 코드가 없습니다.');
+                return;
+            }
+
+            if (typeof html2canvas === 'undefined') {
+                alert('이미지 변환 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+
+            try {
+                // HTML 코드를 임시 iframe에 로드
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.left = '-9999px';
+                iframe.style.width = '794px';
+                iframe.style.height = '1123px';
+                document.body.appendChild(iframe);
+
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iframeDoc.open();
+                iframeDoc.write(htmlCode);
+                iframeDoc.close();
+
+                // iframe이 로드될 때까지 대기
+                await new Promise((resolve) => {
+                    iframe.onload = resolve;
+                    setTimeout(resolve, 1000); // 최대 1초 대기
+                });
+
+                // iframe 내부의 body 요소를 찾아서 이미지로 변환
+                const bodyElement = iframeDoc.body;
+                if (!bodyElement) {
+                    throw new Error('HTML을 로드할 수 없습니다.');
+                }
+
+                const canvasElement = await html2canvas(bodyElement, {
+                    backgroundColor: null,
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: true,
+                    width: 794,
+                    height: 1123
+                });
+
+                // 이미지 다운로드
+                canvasElement.toBlob((blob) => {
+                    if (!blob) {
+                        alert('이미지 변환 중 오류가 발생했습니다.');
+                        return;
+                    }
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'design-from-html.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    // iframe 제거
+                    document.body.removeChild(iframe);
+                }, 'image/png');
+            } catch (error) {
+                console.error('HTML to image conversion error:', error);
+                alert('이미지 변환 중 오류가 발생했습니다: ' + error.message);
+            }
         });
     }
 
@@ -2072,7 +2182,10 @@ document.addEventListener('DOMContentLoaded', () => {
         undoBtn.addEventListener('click', () => {
             if (historyIndex > 0) {
                 historyIndex--;
-                // 히스토리 복원 (간단한 구현)
+                const state = history[historyIndex];
+                if (state) {
+                    restoreState(state);
+                }
                 updateUndoRedoButtons();
             }
         });
@@ -2082,7 +2195,10 @@ document.addEventListener('DOMContentLoaded', () => {
         redoBtn.addEventListener('click', () => {
             if (historyIndex < history.length - 1) {
                 historyIndex++;
-                // 히스토리 복원 (간단한 구현)
+                const state = history[historyIndex];
+                if (state) {
+                    restoreState(state);
+                }
                 updateUndoRedoButtons();
             }
         });
