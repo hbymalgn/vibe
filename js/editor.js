@@ -1156,6 +1156,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (isDragging) {
                         isDragging = false;
+                        if (hasMoved) {
+                            saveState(); // 드래그 완료 시 히스토리 저장
+                        }
                         if (!isEditing) {
                             if (element.classList.contains('text-object')) {
                                 element.style.cursor = 'text';
