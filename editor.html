@@ -1136,12 +1136,18 @@
             </div>
             <div class="modal-body">
                 <div class="code-actions">
-                    <button class="code-btn" id="refreshHtmlBtn">🔄 새로 생성</button>
                     <button class="code-btn" id="copyHtmlBtn">📋 복사</button>
                     <button class="code-btn" id="downloadHtmlBtn">📥 HTML 파일 다운로드</button>
-                    <button class="code-btn" id="convertHtmlToImageBtn">🖼️ 이미지로 변환</button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select class="property-input" id="htmlExportFormat" style="width: 150px; margin: 0;">
+                            <option value="png">PNG</option>
+                            <option value="jpeg">JPEG</option>
+                            <option value="ppt">PPT</option>
+                        </select>
+                        <button class="code-btn" id="convertHtmlToImageBtn">🖼️ 다운로드</button>
+                    </div>
                 </div>
-                <textarea class="code-output" id="htmlCodeOutput" placeholder="HTML 코드를 여기에 입력하거나 붙여넣으세요. 수정 후 이미지로 변환할 수 있습니다."></textarea>
+                <textarea class="code-output" id="htmlCodeOutput" placeholder="HTML 코드를 여기에 입력하거나 붙여넣으세요. 수정 후 다운로드할 수 있습니다."></textarea>
             </div>
         </div>
     </div>

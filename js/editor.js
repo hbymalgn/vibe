@@ -1705,18 +1705,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // HTML 코드 새로 생성 버튼
-    const refreshHtmlBtn = document.getElementById('refreshHtmlBtn');
-    if (refreshHtmlBtn && htmlCodeOutput) {
-        refreshHtmlBtn.addEventListener('click', () => {
-            const html = generateHTML();
-            htmlCodeOutput.value = html;
-            refreshHtmlBtn.textContent = '✓ 새로 생성됨';
-            setTimeout(() => {
-                refreshHtmlBtn.textContent = '🔄 새로 생성';
-            }, 2000);
-        });
-    }
 
     if (closeHtmlModal) {
         closeHtmlModal.addEventListener('click', () => {
@@ -1864,6 +1852,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     allowTaint: true
                 });
                 
+                const mimeType = format === 'png' && isTransparent ? 'image/png' : `image/${format}`;
+                const quality = format === 'jpeg' ? 0.92 : undefined;
+                
                 canvasElement.toBlob((blob) => {
                     if (!blob) {
                         alert('다운로드 중 오류가 발생했습니다.');
@@ -1872,12 +1863,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `design.${format}`;
+                    const projectName = projectNameInput ? projectNameInput.value : 'design';
+                    a.download = `${projectName}.${format}`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                }, format === 'png' && isTransparent ? 'image/png' : `image/${format}`);
+                }, mimeType, quality);
             } catch (error) {
                 console.error('다운로드 오류:', error);
                 alert('다운로드 중 오류가 발생했습니다: ' + error.message);
