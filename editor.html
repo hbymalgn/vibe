@@ -512,13 +512,17 @@
             font-family: 'Fira Code', 'Consolas', monospace;
             font-size: 0.85rem;
             line-height: 1.5;
-            resize: none;
+            resize: vertical;
             min-height: 400px;
         }
         
         .code-output:focus {
             outline: none;
             border-color: #8B5CF6;
+        }
+        
+        .code-output::placeholder {
+            color: #666;
         }
         
         .right-panel {
@@ -1115,6 +1119,7 @@
                     <select class="property-input" id="exportFormat">
                         <option value="png">PNG (투명 배경 지원)</option>
                         <option value="jpeg">JPEG (작은 파일 크기)</option>
+                        <option value="ppt">PPT (PowerPoint)</option>
                     </select>
                 </div>
             </div>
