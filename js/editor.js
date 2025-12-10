@@ -1765,7 +1765,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (format === 'ppt') {
                 // PPT 형식
-                if (typeof PptxGenJS === 'undefined') {
+                // PptxGenJS 라이브러리 확인 (다양한 전역 변수 이름 시도)
+                const PptxGen = window.PptxGenJS || window.PptxGen || window.pptxgen;
+                if (!PptxGen) {
                     alert('PPT 생성 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
                     return;
                 }
@@ -1835,7 +1837,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const imageData = canvasElement.toDataURL('image/png');
                     
                     // PPT 생성
-                    const pptx = new PptxGenJS();
+                    const PptxGen = window.PptxGenJS || window.PptxGen || window.pptxgen;
+                    const pptx = new PptxGen();
                     const slide = pptx.addSlide();
                     pptx.layout = 'LAYOUT_WIDE';
                     
@@ -1907,14 +1910,38 @@ document.addEventListener('DOMContentLoaded', () => {
                             // 폰트가 제대로 렌더링되도록 보장
                             const clonedBody = clonedDoc.body;
                             if (clonedBody) {
+                                // 모든 텍스트 요소 찾기 (position: absolute인 요소 포함)
                                 const textElements = clonedBody.querySelectorAll('div, p, span, h1, h2, h3');
                                 textElements.forEach(el => {
-                                    const style = window.getComputedStyle(el);
-                                    el.style.fontFamily = style.fontFamily || 'Arial';
-                                    el.style.fontSize = style.fontSize || '16px';
-                                    el.style.color = style.color || '#000000';
-                                    el.style.fontWeight = style.fontWeight || 'normal';
-                                    el.style.fontStyle = style.fontStyle || 'normal';
+                                    // 원본 요소 찾기 (iframe 내부이므로 직접 접근 불가, 스타일만 복사)
+                                    const computedStyle = clonedDoc.defaultView.getComputedStyle(el);
+                                    
+                                    // 텍스트 스타일 명시적으로 설정
+                                    el.style.fontFamily = computedStyle.fontFamily || 'Arial';
+                                    el.style.fontSize = computedStyle.fontSize || '16px';
+                                    el.style.color = computedStyle.color || '#000000';
+                                    el.style.fontWeight = computedStyle.fontWeight || 'normal';
+                                    el.style.fontStyle = computedStyle.fontStyle || 'normal';
+                                    el.style.textDecoration = computedStyle.textDecoration || 'none';
+                                    el.style.lineHeight = computedStyle.lineHeight || 'normal';
+                                    
+                                    // 위치 스타일 보존
+                                    if (computedStyle.position === 'absolute') {
+                                        el.style.position = 'absolute';
+                                        el.style.left = computedStyle.left || '0px';
+                                        el.style.top = computedStyle.top || '0px';
+                                        el.style.width = computedStyle.width || 'auto';
+                                        el.style.height = computedStyle.height || 'auto';
+                                    }
+                                    
+                                    // 표시 보장
+                                    el.style.display = computedStyle.display || 'block';
+                                    el.style.visibility = 'visible';
+                                    el.style.opacity = '1';
+                                    
+                                    // contentEditable 제거
+                                    el.contentEditable = 'false';
+                                    el.removeAttribute('contenteditable');
                                 });
                             }
                         }
@@ -1962,7 +1989,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // PPT 형식인 경우
             if (format === 'ppt') {
-                if (typeof PptxGenJS === 'undefined') {
+                // PptxGenJS 라이브러리 확인 (다양한 전역 변수 이름 시도)
+                const PptxGen = window.PptxGenJS || window.PptxGen || window.pptxgen;
+                if (!PptxGen) {
                     alert('PPT 생성 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
                     return;
                 }
@@ -2063,7 +2092,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const imageData = canvasElement.toDataURL('image/png');
                     
                     // PPT 생성
-                    const pptx = new PptxGenJS();
+                    const PptxGen = window.PptxGenJS || window.PptxGen || window.pptxgen;
+                    const pptx = new PptxGen();
                     const slide = pptx.addSlide();
                     
                     // 슬라이드 크기를 와이드(16:9)로 설정
