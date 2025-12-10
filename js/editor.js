@@ -1749,8 +1749,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // HTML 소스코드를 이미지로 변환하는 기능
+    // HTML 소스코드를 이미지/PPT로 변환하는 기능
     const convertHtmlToImageBtn = document.getElementById('convertHtmlToImageBtn');
+    const htmlExportFormat = document.getElementById('htmlExportFormat');
+    
     if (convertHtmlToImageBtn && htmlCodeOutput) {
         convertHtmlToImageBtn.addEventListener('click', async () => {
             const htmlCode = htmlCodeOutput.value;
@@ -1759,68 +1761,190 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (typeof html2canvas === 'undefined') {
-                alert('이미지 변환 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
-                return;
-            }
+            const format = htmlExportFormat ? htmlExportFormat.value : 'png';
 
-            try {
-                // HTML 코드를 임시 iframe에 로드
-                const iframe = document.createElement('iframe');
-                iframe.style.position = 'absolute';
-                iframe.style.left = '-9999px';
-                iframe.style.width = '794px';
-                iframe.style.height = '1123px';
-                document.body.appendChild(iframe);
-
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                iframeDoc.open();
-                iframeDoc.write(htmlCode);
-                iframeDoc.close();
-
-                // iframe이 로드될 때까지 대기
-                await new Promise((resolve) => {
-                    iframe.onload = resolve;
-                    setTimeout(resolve, 1000); // 최대 1초 대기
-                });
-
-                // iframe 내부의 body 요소를 찾아서 이미지로 변환
-                const bodyElement = iframeDoc.body;
-                if (!bodyElement) {
-                    throw new Error('HTML을 로드할 수 없습니다.');
+            if (format === 'ppt') {
+                // PPT 형식
+                if (typeof PptxGenJS === 'undefined') {
+                    alert('PPT 생성 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
+                    return;
+                }
+                
+                if (typeof html2canvas === 'undefined') {
+                    alert('이미지 변환 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
+                    return;
                 }
 
-                const canvasElement = await html2canvas(bodyElement, {
-                    backgroundColor: null,
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    allowTaint: true,
-                    width: 794,
-                    height: 1123
-                });
+                try {
+                    // HTML 코드를 임시 iframe에 로드
+                    const iframe = document.createElement('iframe');
+                    iframe.style.position = 'absolute';
+                    iframe.style.left = '-9999px';
+                    iframe.style.width = '794px';
+                    iframe.style.height = '1123px';
+                    document.body.appendChild(iframe);
 
-                // 이미지 다운로드
-                canvasElement.toBlob((blob) => {
-                    if (!blob) {
-                        alert('이미지 변환 중 오류가 발생했습니다.');
-                        return;
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    iframeDoc.open();
+                    iframeDoc.write(htmlCode);
+                    iframeDoc.close();
+
+                    // iframe이 로드될 때까지 대기 (이미지와 폰트 로딩 대기)
+                    await new Promise((resolve) => {
+                        iframe.onload = resolve;
+                        setTimeout(resolve, 2000); // 이미지와 폰트 로딩을 위해 2초 대기
+                    });
+
+                    const bodyElement = iframeDoc.body;
+                    if (!bodyElement) {
+                        throw new Error('HTML을 로드할 수 없습니다.');
                     }
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'design-from-html.png';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+
+                    // 추가 대기 (이미지 로딩 완료 대기)
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    const canvasElement = await html2canvas(bodyElement, {
+                        backgroundColor: null,
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        allowTaint: true,
+                        width: 794,
+                        height: 1123,
+                        x: 0,
+                        y: 0,
+                        scrollX: 0,
+                        scrollY: 0,
+                        onclone: (clonedDoc) => {
+                            // 폰트가 제대로 렌더링되도록 보장
+                            const clonedBody = clonedDoc.body;
+                            if (clonedBody) {
+                                const textElements = clonedBody.querySelectorAll('div, p, span, h1, h2, h3');
+                                textElements.forEach(el => {
+                                    const style = window.getComputedStyle(el);
+                                    el.style.fontFamily = style.fontFamily || 'Arial';
+                                    el.style.fontSize = style.fontSize || '16px';
+                                    el.style.color = style.color || '#000000';
+                                    el.style.fontWeight = style.fontWeight || 'normal';
+                                    el.style.fontStyle = style.fontStyle || 'normal';
+                                });
+                            }
+                        }
+                    });
+
+                    const imageData = canvasElement.toDataURL('image/png');
+                    
+                    // PPT 생성
+                    const pptx = new PptxGenJS();
+                    const slide = pptx.addSlide();
+                    pptx.layout = 'LAYOUT_WIDE';
+                    
+                    slide.addImage({
+                        data: imageData,
+                        x: 0,
+                        y: 0,
+                        w: '100%',
+                        h: '100%',
+                        sizing: { type: 'contain', w: '100%', h: '100%' }
+                    });
+                    
+                    await pptx.writeFile({ fileName: 'design-from-html.pptx' });
                     
                     // iframe 제거
                     document.body.removeChild(iframe);
-                }, 'image/png');
-            } catch (error) {
-                console.error('HTML to image conversion error:', error);
-                alert('이미지 변환 중 오류가 발생했습니다: ' + error.message);
+                } catch (error) {
+                    console.error('PPT 변환 오류:', error);
+                    alert('PPT 변환 중 오류가 발생했습니다: ' + error.message);
+                }
+            } else {
+                // 이미지 형식 (PNG, JPEG)
+                if (typeof html2canvas === 'undefined') {
+                    alert('이미지 변환 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.');
+                    return;
+                }
+
+                try {
+                    // HTML 코드를 임시 iframe에 로드
+                    const iframe = document.createElement('iframe');
+                    iframe.style.position = 'absolute';
+                    iframe.style.left = '-9999px';
+                    iframe.style.width = '794px';
+                    iframe.style.height = '1123px';
+                    document.body.appendChild(iframe);
+
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    iframeDoc.open();
+                    iframeDoc.write(htmlCode);
+                    iframeDoc.close();
+
+                    // iframe이 로드될 때까지 대기 (이미지와 폰트 로딩 대기)
+                    await new Promise((resolve) => {
+                        iframe.onload = resolve;
+                        setTimeout(resolve, 2000); // 이미지와 폰트 로딩을 위해 2초 대기
+                    });
+
+                    const bodyElement = iframeDoc.body;
+                    if (!bodyElement) {
+                        throw new Error('HTML을 로드할 수 없습니다.');
+                    }
+
+                    // 추가 대기 (이미지 로딩 완료 대기)
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    const canvasElement = await html2canvas(bodyElement, {
+                        backgroundColor: null,
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        allowTaint: true,
+                        width: 794,
+                        height: 1123,
+                        x: 0,
+                        y: 0,
+                        scrollX: 0,
+                        scrollY: 0,
+                        onclone: (clonedDoc) => {
+                            // 폰트가 제대로 렌더링되도록 보장
+                            const clonedBody = clonedDoc.body;
+                            if (clonedBody) {
+                                const textElements = clonedBody.querySelectorAll('div, p, span, h1, h2, h3');
+                                textElements.forEach(el => {
+                                    const style = window.getComputedStyle(el);
+                                    el.style.fontFamily = style.fontFamily || 'Arial';
+                                    el.style.fontSize = style.fontSize || '16px';
+                                    el.style.color = style.color || '#000000';
+                                    el.style.fontWeight = style.fontWeight || 'normal';
+                                    el.style.fontStyle = style.fontStyle || 'normal';
+                                });
+                            }
+                        }
+                    });
+
+                    // 이미지 다운로드
+                    const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+                    const quality = format === 'jpeg' ? 0.92 : undefined;
+                    
+                    canvasElement.toBlob((blob) => {
+                        if (!blob) {
+                            alert('이미지 변환 중 오류가 발생했습니다.');
+                            return;
+                        }
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `design-from-html.${format}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        
+                        // iframe 제거
+                        document.body.removeChild(iframe);
+                    }, mimeType, quality);
+                } catch (error) {
+                    console.error('이미지 변환 오류:', error);
+                    alert('이미지 변환 중 오류가 발생했습니다: ' + error.message);
+                }
             }
         });
     }
@@ -1849,6 +1973,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 try {
+                    // 폰트 로딩 대기
+                    await document.fonts.ready;
+                    
+                    // 현재 스크롤 위치 저장
+                    const scrollX = window.scrollX || window.pageXOffset;
+                    const scrollY = window.scrollY || window.pageYOffset;
+                    
+                    // canvasWrapper의 위치 계산
+                    const rect = canvasWrapper.getBoundingClientRect();
+                    
                     // canvasWrapper를 이미지로 변환 (텍스트 포함 전체)
                     const canvasElement = await html2canvas(canvasWrapper, {
                         backgroundColor: isTransparent ? null : (canvasBgColor ? canvasBgColor.value : '#FFFFFF'),
@@ -1856,6 +1990,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         useCORS: true,
                         logging: false,
                         allowTaint: true,
+                        x: 0,
+                        y: 0,
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: canvasWrapper.offsetWidth,
+                        windowHeight: canvasWrapper.offsetHeight,
                         onclone: (clonedDoc) => {
                             // 폰트가 제대로 로드되도록 대기
                             const clonedWrapper = clonedDoc.getElementById('canvasWrapper');
@@ -1863,10 +2003,44 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // 모든 텍스트 요소의 폰트가 로드되도록 보장
                                 const textElements = clonedWrapper.querySelectorAll('.text-object');
                                 textElements.forEach(el => {
-                                    const style = window.getComputedStyle(el);
-                                    el.style.fontFamily = style.fontFamily;
-                                    el.style.fontSize = style.fontSize;
-                                    el.style.color = style.color;
+                                    // contentEditable 제거 (html2canvas가 제대로 렌더링하도록)
+                                    el.contentEditable = 'false';
+                                    el.removeAttribute('contenteditable');
+                                    
+                                    // 원본 요소의 스타일 가져오기
+                                    const originalEl = canvasWrapper.querySelector(`[data-export-id="${el.dataset.exportId || ''}"]`) || 
+                                                      Array.from(canvasWrapper.querySelectorAll('.text-object'))[Array.from(clonedWrapper.querySelectorAll('.text-object')).indexOf(el)];
+                                    
+                                    if (originalEl) {
+                                        const style = window.getComputedStyle(originalEl);
+                                        
+                                        // 모든 텍스트 스타일 명시적으로 설정
+                                        el.style.fontFamily = style.fontFamily || 'Arial';
+                                        el.style.fontSize = style.fontSize || '18px';
+                                        el.style.color = style.color || '#000000';
+                                        el.style.fontWeight = style.fontWeight || 'normal';
+                                        el.style.fontStyle = style.fontStyle || 'normal';
+                                        el.style.textDecoration = style.textDecoration || 'none';
+                                        el.style.lineHeight = style.lineHeight || 'normal';
+                                        el.style.letterSpacing = style.letterSpacing || 'normal';
+                                        el.style.textAlign = style.textAlign || 'left';
+                                        el.style.display = 'block';
+                                        el.style.visibility = 'visible';
+                                        el.style.opacity = '1';
+                                        
+                                        // 텍스트 내용이 있는지 확인
+                                        if (!el.textContent && !el.innerText) {
+                                            el.textContent = originalEl.textContent || originalEl.innerText || '텍스트';
+                                        }
+                                    }
+                                });
+                                
+                                // 이미지 요소도 확인
+                                const imageElements = clonedWrapper.querySelectorAll('.image-object img');
+                                imageElements.forEach(img => {
+                                    if (!img.complete) {
+                                        img.style.display = 'none';
+                                    }
                                 });
                             }
                         }
@@ -1909,6 +2083,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             try {
+                // 폰트 로딩 대기
+                await document.fonts.ready;
+                
+                // 현재 스크롤 위치 저장
+                const scrollX = window.scrollX || window.pageXOffset;
+                const scrollY = window.scrollY || window.pageYOffset;
+                
+                // canvasWrapper의 위치 계산
+                const rect = canvasWrapper.getBoundingClientRect();
+                
+                // 텍스트 요소에 고유 ID 추가 (매칭을 위해)
+                const textElements = canvasWrapper.querySelectorAll('.text-object');
+                textElements.forEach((el, index) => {
+                    if (!el.dataset.exportId) {
+                        el.dataset.exportId = `text-${index}-${Date.now()}`;
+                    }
+                });
+                
                 // canvasWrapper를 이미지로 변환 (텍스트 포함 전체)
                 const canvasElement = await html2canvas(canvasWrapper, {
                     backgroundColor: isTransparent ? null : (canvasBgColor ? canvasBgColor.value : '#FFFFFF'),
@@ -1916,17 +2108,62 @@ document.addEventListener('DOMContentLoaded', () => {
                     useCORS: true,
                     logging: false,
                     allowTaint: true,
+                    x: 0,
+                    y: 0,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: canvasWrapper.offsetWidth,
+                    windowHeight: canvasWrapper.offsetHeight,
                     onclone: (clonedDoc) => {
                         // 폰트가 제대로 로드되도록 대기
                         const clonedWrapper = clonedDoc.getElementById('canvasWrapper');
                         if (clonedWrapper) {
                             // 모든 텍스트 요소의 폰트가 로드되도록 보장
-                            const textElements = clonedWrapper.querySelectorAll('.text-object');
-                            textElements.forEach(el => {
-                                const style = window.getComputedStyle(el);
-                                el.style.fontFamily = style.fontFamily;
-                                el.style.fontSize = style.fontSize;
-                                el.style.color = style.color;
+                            const clonedTextElements = clonedWrapper.querySelectorAll('.text-object');
+                            clonedTextElements.forEach((el, index) => {
+                                // contentEditable 제거 (html2canvas가 제대로 렌더링하도록)
+                                el.contentEditable = 'false';
+                                el.removeAttribute('contenteditable');
+                                
+                                // 원본 요소 찾기
+                                const exportId = el.dataset.exportId;
+                                const originalEl = exportId ? 
+                                    canvasWrapper.querySelector(`[data-export-id="${exportId}"]`) :
+                                    Array.from(canvasWrapper.querySelectorAll('.text-object'))[index];
+                                
+                                if (originalEl) {
+                                    const style = window.getComputedStyle(originalEl);
+                                    
+                                    // 모든 텍스트 스타일 명시적으로 설정
+                                    el.style.fontFamily = style.fontFamily || 'Arial';
+                                    el.style.fontSize = style.fontSize || '18px';
+                                    el.style.color = style.color || '#000000';
+                                    el.style.fontWeight = style.fontWeight || 'normal';
+                                    el.style.fontStyle = style.fontStyle || 'normal';
+                                    el.style.textDecoration = style.textDecoration || 'none';
+                                    el.style.lineHeight = style.lineHeight || 'normal';
+                                    el.style.letterSpacing = style.letterSpacing || 'normal';
+                                    el.style.textAlign = style.textAlign || 'left';
+                                    el.style.display = 'block';
+                                    el.style.visibility = 'visible';
+                                    el.style.opacity = '1';
+                                    el.style.position = 'absolute';
+                                    el.style.left = style.left || '0px';
+                                    el.style.top = style.top || '0px';
+                                    
+                                    // 텍스트 내용이 있는지 확인
+                                    if (!el.textContent && !el.innerText) {
+                                        el.textContent = originalEl.textContent || originalEl.innerText || '텍스트';
+                                    }
+                                }
+                            });
+                            
+                            // 이미지 요소도 확인
+                            const imageElements = clonedWrapper.querySelectorAll('.image-object img');
+                            imageElements.forEach(img => {
+                                if (!img.complete) {
+                                    img.style.display = 'none';
+                                }
                             });
                         }
                     }
