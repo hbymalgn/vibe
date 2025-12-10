@@ -1666,9 +1666,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (child.classList.contains('text-object')) {
                 const style = window.getComputedStyle(child);
+                const textContent = child.textContent || child.innerText || '텍스트';
                 html += `
-        <div style="position: absolute; left: ${x}px; top: ${y}px; font-size: ${style.fontSize}; font-family: ${style.fontFamily}; color: ${style.color};">
-            ${child.textContent}
+        <div style="position: absolute; left: ${x}px; top: ${y}px; font-size: ${style.fontSize}; font-family: ${style.fontFamily}; color: ${style.color}; font-weight: ${style.fontWeight}; font-style: ${style.fontStyle}; text-decoration: ${style.textDecoration}; line-height: ${style.lineHeight}; white-space: pre-wrap;">
+            ${textContent}
         </div>`;
             } else if (child.classList.contains('image-object')) {
                 const img = child.querySelector('img');
