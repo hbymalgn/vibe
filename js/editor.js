@@ -1802,8 +1802,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error('HTML을 로드할 수 없습니다.');
                     }
 
+                    // 폰트 로딩 대기
+                    if (iframeDoc.fonts && iframeDoc.fonts.ready) {
+                        await iframeDoc.fonts.ready;
+                    }
+                    
                     // 추가 대기 (이미지 로딩 완료 대기)
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
 
                     const canvasElement = await html2canvas(bodyElement, {
                         backgroundColor: null,
@@ -1821,14 +1826,46 @@ document.addEventListener('DOMContentLoaded', () => {
                             // 폰트가 제대로 렌더링되도록 보장
                             const clonedBody = clonedDoc.body;
                             if (clonedBody) {
+                                // 모든 텍스트 요소 찾기 (position: absolute인 요소 포함)
                                 const textElements = clonedBody.querySelectorAll('div, p, span, h1, h2, h3');
                                 textElements.forEach(el => {
-                                    const style = window.getComputedStyle(el);
-                                    el.style.fontFamily = style.fontFamily || 'Arial';
-                                    el.style.fontSize = style.fontSize || '16px';
-                                    el.style.color = style.color || '#000000';
-                                    el.style.fontWeight = style.fontWeight || 'normal';
-                                    el.style.fontStyle = style.fontStyle || 'normal';
+                                    // iframe 내부이므로 clonedDoc.defaultView.getComputedStyle 사용
+                                    const computedStyle = clonedDoc.defaultView.getComputedStyle(el);
+                                    
+                                    // 텍스트 내용 확인
+                                    if (!el.textContent && !el.innerText) {
+                                        // 텍스트가 없으면 스킵하지 않고 기본값 설정
+                                        el.textContent = '텍스트';
+                                    }
+                                    
+                                    // 텍스트 스타일 명시적으로 설정
+                                    el.style.fontFamily = computedStyle.fontFamily || 'Arial';
+                                    el.style.fontSize = computedStyle.fontSize || '16px';
+                                    el.style.color = computedStyle.color || '#000000';
+                                    el.style.fontWeight = computedStyle.fontWeight || 'normal';
+                                    el.style.fontStyle = computedStyle.fontStyle || 'normal';
+                                    el.style.textDecoration = computedStyle.textDecoration || 'none';
+                                    el.style.lineHeight = computedStyle.lineHeight || 'normal';
+                                    el.style.letterSpacing = computedStyle.letterSpacing || 'normal';
+                                    
+                                    // 위치 스타일 보존
+                                    if (computedStyle.position === 'absolute') {
+                                        el.style.position = 'absolute';
+                                        el.style.left = computedStyle.left || '0px';
+                                        el.style.top = computedStyle.top || '0px';
+                                        el.style.width = computedStyle.width || 'auto';
+                                        el.style.height = computedStyle.height || 'auto';
+                                    }
+                                    
+                                    // 표시 보장
+                                    el.style.display = computedStyle.display || 'block';
+                                    el.style.visibility = 'visible';
+                                    el.style.opacity = '1';
+                                    el.style.whiteSpace = 'pre-wrap';
+                                    
+                                    // contentEditable 제거
+                                    el.contentEditable = 'false';
+                                    el.removeAttribute('contenteditable');
                                 });
                             }
                         }
