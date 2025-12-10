@@ -1983,6 +1983,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // canvasWrapper의 위치 계산
                     const rect = canvasWrapper.getBoundingClientRect();
                     
+                    // 텍스트 요소에 고유 ID 추가 (매칭을 위해)
+                    const textElementsForId = canvasWrapper.querySelectorAll('.text-object');
+                    textElementsForId.forEach((el, index) => {
+                        if (!el.dataset.exportId) {
+                            el.dataset.exportId = `text-${index}-${Date.now()}`;
+                        }
+                    });
+                    
                     // canvasWrapper를 이미지로 변환 (텍스트 포함 전체)
                     const canvasElement = await html2canvas(canvasWrapper, {
                         backgroundColor: isTransparent ? null : (canvasBgColor ? canvasBgColor.value : '#FFFFFF'),
@@ -2001,15 +2009,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             const clonedWrapper = clonedDoc.getElementById('canvasWrapper');
                             if (clonedWrapper) {
                                 // 모든 텍스트 요소의 폰트가 로드되도록 보장
-                                const textElements = clonedWrapper.querySelectorAll('.text-object');
-                                textElements.forEach(el => {
+                                const clonedTextElements = clonedWrapper.querySelectorAll('.text-object');
+                                clonedTextElements.forEach((el, index) => {
                                     // contentEditable 제거 (html2canvas가 제대로 렌더링하도록)
                                     el.contentEditable = 'false';
                                     el.removeAttribute('contenteditable');
                                     
-                                    // 원본 요소의 스타일 가져오기
-                                    const originalEl = canvasWrapper.querySelector(`[data-export-id="${el.dataset.exportId || ''}"]`) || 
-                                                      Array.from(canvasWrapper.querySelectorAll('.text-object'))[Array.from(clonedWrapper.querySelectorAll('.text-object')).indexOf(el)];
+                                    // 원본 요소 찾기
+                                    const exportId = el.dataset.exportId;
+                                    const originalEl = exportId ? 
+                                        canvasWrapper.querySelector(`[data-export-id="${exportId}"]`) :
+                                        Array.from(canvasWrapper.querySelectorAll('.text-object'))[index];
                                     
                                     if (originalEl) {
                                         const style = window.getComputedStyle(originalEl);
@@ -2027,6 +2037,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         el.style.display = 'block';
                                         el.style.visibility = 'visible';
                                         el.style.opacity = '1';
+                                        el.style.position = 'absolute';
+                                        el.style.left = style.left || '0px';
+                                        el.style.top = style.top || '0px';
                                         
                                         // 텍스트 내용이 있는지 확인
                                         if (!el.textContent && !el.innerText) {
